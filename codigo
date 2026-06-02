@@ -1,0 +1,60 @@
+// === Sensor Ultrassônico HC-SR04 + LED indicador ===
+// Baseado no circuito: Arduino Uno + Protoboard + LED 220Ω + HC-SR04
+
+const int TRIG_PIN = 9;   // Pino TRIG do sensor (fio verde)
+const int ECHO_PIN = 8;   // Pino ECHO do sensor (fio verde)
+const int LED_PIN  = 7;   // LED vermelho na protoboard (resistor 220Ω)
+
+const int DISTANCIA_ALERTA = 20; // cm — objeto "próximo"
+
+void setup() {
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(LED_PIN, OUTPUT);
+  Serial.begin(9600);
+  Serial.println("Sensor iniciado. Aproxime um objeto...");
+}
+
+long medirDistancia() {
+  // Garante pulso limpo
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+
+  // Dispara pulso de 10µs
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  // Lê o tempo do eco
+  long duracao = pulseIn(ECHO_PIN, HIGH, 30000); // timeout 30ms
+
+  if (duracao == 0) return -1; // Sem retorno = fora do alcance
+
+  // Converte para cm: velocidade do som = 343 m/s
+  return duracao / 58;
+}
+
+void loop() {
+  long distancia = medirDistancia();
+
+  if (distancia == -1) {
+    Serial.println("Distancia: fora do alcance");
+    digitalWrite(LED_PIN, LOW);
+  }
+  else if (distancia <= DISTANCIA_ALERTA) {
+    // Objeto próximo → LED aceso
+    digitalWrite(LED_PIN, HIGH);
+    Serial.print("Distancia: ");
+    Serial.print(distancia);
+    Serial.println(" cm  ⚠ OBJETO PROXIMO!");
+  }
+  else {
+    // Objeto longe → LED apagado
+    digitalWrite(LED_PIN, LOW);
+    Serial.print("Distancia: ");
+    Serial.print(distancia);
+    Serial.println(" cm");
+  }
+
+  delay(200);
+}
